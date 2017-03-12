@@ -33,7 +33,6 @@ public class Controller {
 	 */
 	public void connect(String host, String nickname) throws UnknownHostException, IOException {
 		try {
-			System.out.println("nickname is:" + nickname);
 			Session.clientComm.connect(host, nickname);
 			Session.loggedUser = nickname;
 		} catch (UnknownHostException uhe) {
