@@ -27,6 +27,14 @@ import mt.filter.AnalyticsFilter;
  * @author Group 78
  *
  */
+/**
+ * @author Leandro
+ *
+ */
+/**
+ * @author Leandro
+ *
+ */
 public class MicroServer implements MicroTraderServer {
 	
 	public static void main(String[] args) {
@@ -103,8 +111,11 @@ public class MicroServer implements MicroTraderServer {
 						if(msg.getOrder().getServerOrderID() == EMPTY){
 							msg.getOrder().setServerOrderID(id++);
 						}
-						notifyAllClients(msg.getOrder());
-						processNewOrder(msg);
+						if ((msg.getOrder().isBuyOrder()) || ((msg.getOrder().isSellOrder()) && 
+					              (canPutSellOrder(msg.getSenderNickname())))){
+					              notifyAllClients(msg.getOrder());
+					              processNewOrder(msg);
+					    }
 					} catch (ServerException e) {
 						serverComm.sendError(msg.getSenderNickname(), e.getMessage());
 					}
@@ -115,7 +126,29 @@ public class MicroServer implements MicroTraderServer {
 		}
 		LOGGER.log(Level.INFO, "Shutting Down Server...");
 	}
-
+/**
+ * Verify if a certain user can put a sell oder
+ * 
+ * @param user
+ * 		name of user to verify
+ * @return
+ * 		return true if the user can put a sell order
+ */
+	private boolean canPutSellOrder(String user) {
+		Set<Order> sellOrders = orderMap.get(user);
+	    Iterator<Order> i = sellOrders.iterator();
+	    while (i.hasNext()) {
+	      if (((Order)i.next()).isBuyOrder()) {
+	        i.remove();
+	      }
+	    }
+	    if (sellOrders.size() < 5) {
+	      return true;
+	    }
+	    id -= 1;
+	    LOGGER.log(Level.INFO, "Can't process this sell order");
+	    return false;
+	}
 
 	/**
 	 * Verify if user is already connected

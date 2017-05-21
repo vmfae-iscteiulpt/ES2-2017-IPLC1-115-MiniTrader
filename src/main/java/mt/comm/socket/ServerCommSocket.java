@@ -254,8 +254,8 @@ class ServerCommThread extends Thread {
 			while (true) {
 				if (connectedUsers.get(nickname) != null) {
 					ServerSideMessage message = (ServerSideMessage) in.readObject();
-					serverMessages.put(message);
-					System.out.println(String.format("ServerComm >> Processing %s from client '%s'", message, nickname));
+						serverMessages.put(message);
+						System.out.println(String.format("ServerComm >> Processing %s from client '%s'", message, nickname));
 					if (Type.DISCONNECTED.equals(message.getType())) {
 						String senderNickname = message.getSenderNickname();
 						ObjectOutputStream out = connectedUsers.remove(senderNickname);
