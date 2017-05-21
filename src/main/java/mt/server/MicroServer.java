@@ -1,5 +1,7 @@
 package mt.server;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,6 +14,18 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import mt.Order;
 import mt.comm.ServerComm;
@@ -103,6 +117,7 @@ public class MicroServer implements MicroTraderServer {
 						if(msg.getOrder().getServerOrderID() == EMPTY){
 							msg.getOrder().setServerOrderID(id++);
 						}
+						
 						if(msg.getOrder().getNumberOfUnits()<10){
 							id--;
 							System.out.println("Number of Units must be almost 10");
@@ -110,9 +125,10 @@ public class MicroServer implements MicroTraderServer {
 						}
 						if ((msg.getOrder().isBuyOrder()) || ((msg.getOrder().isSellOrder()) && 
 					              (canPutSellOrder(msg.getSenderNickname())))){
-					              notifyAllClients(msg.getOrder());
-					              processNewOrder(msg);
-							}
+								writeXML(msg.getOrder());
+					            notifyAllClients(msg.getOrder());
+					            processNewOrder(msg);
+						}
 					} catch (ServerException e) {
 						serverComm.sendError(msg.getSenderNickname(), e.getMessage());
 					}
@@ -124,6 +140,9 @@ public class MicroServer implements MicroTraderServer {
 		LOGGER.log(Level.INFO, "Shutting Down Server...");
 	}
 	
+	
+		
+
 	/**
 	 * Verify if a certain user can put a sell oder
 	 * 
@@ -396,5 +415,50 @@ public class MicroServer implements MicroTraderServer {
 			}
 		}
 	}
+	
+	/**
+	 * 	Write order in XML file
+	 * @param o
+	 * 		order to be write in XML
+	 */
+	private void writeXML(Order o) {
+	      try {	
+	          File inputFile = new File("persistency.xml");
+	          DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+	          DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+	          Document doc = dBuilder.parse(inputFile);
+	          doc.getDocumentElement().normalize();    
+
+	          String id = Integer.toString(o.getServerOrderID());
+	          String type = "";
+	          if(o.isBuyOrder()){
+	        	  type +="Buy";
+	          }
+	          if(o.isSellOrder()){
+	        	  type +="Sell";
+	          }
+	          String stock = o.getStock();
+	          String units = Integer.toString(o.getNumberOfUnits());
+	          String price = Double.toString(o.getPricePerUnit());
+	          
+	          // Create new element Order with attributes
+	          Element newElement = doc.createElement("Order");
+	          newElement.setAttribute("Id", id);
+	          newElement.setAttribute("Type", type);
+	          newElement.setAttribute("Stock", stock);
+	          newElement.setAttribute("Units", units);
+	          newElement.setAttribute("Price", price);
+	   
+	          Node n = doc.getDocumentElement();
+	          n.appendChild(newElement);
+	          // Save XML document
+	          System.out.println("Save XML document.");
+	          Transformer transformer = TransformerFactory.newInstance().newTransformer();
+	          transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+	          StreamResult result = new StreamResult(new FileOutputStream("persistency.xml"));
+	          DOMSource source = new DOMSource(doc);
+	          transformer.transform(source, result);
+	       } catch (Exception e) { e.printStackTrace(); }
+	   }
 
 }
