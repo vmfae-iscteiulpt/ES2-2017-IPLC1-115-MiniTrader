@@ -103,6 +103,11 @@ public class MicroServer implements MicroTraderServer {
 						if(msg.getOrder().getServerOrderID() == EMPTY){
 							msg.getOrder().setServerOrderID(id++);
 						}
+						if(msg.getOrder().getNumberOfUnits()<10){
+							id--;
+							System.out.println("Number of Units must be almost 10");
+							break;
+						}
 						notifyAllClients(msg.getOrder());
 						processNewOrder(msg);
 					} catch (ServerException e) {
